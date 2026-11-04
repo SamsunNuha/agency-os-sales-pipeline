@@ -1,313 +1,203 @@
 # Agency OS — Sales Pipeline & Deal Management
 
-A production-grade, full-stack Sales Pipeline and Deal Management system for digital agencies, built by **Neirah Tech** as part of the Agency OS platform.
+> **Production-grade CRM and Sales Pipeline Management System engineered specifically for digital agencies.**  
+> Built with Next.js 16, React 19, NestJS 10, Prisma ORM, and PostgreSQL.
 
 ---
 
-## Table of Contents
+## 1. Project Overview & Features
 
-1. [Project Overview](#1-project-overview)
-2. [Technology Stack](#2-technology-stack)
-3. [Architecture](#3-architecture)
-4. [Prerequisites](#4-prerequisites)
-5. [Installation](#5-installation)
-6. [Environment Configuration](#6-environment-configuration)
-7. [Database Setup](#7-database-setup)
-8. [Running the Application](#8-running-the-application)
-9. [Testing](#9-testing)
-10. [API Documentation](#10-api-documentation)
-11. [Production Build](#11-production-build)
-12. [Troubleshooting](#12-troubleshooting)
-13. [Demo Login](#13-demo-login)
-14. [Known Limitations & Integration Points](#14-known-limitations--integration-points)
+Agency OS provides digital agency teams with end-to-end deal tracking, sales pipeline automation, and delivery handoffs:
 
----
-
-## 1. Project Overview
-
-Agency OS Sales Pipeline provides authorized agency users with:
-
-- **Multi-pipeline deal management** — create, assign, and manage deals across pipelines.
-- **Interactive Kanban board** — drag-and-drop deal cards with backend persistence.
-- **Deal probability engine** — deterministic, explainable scoring (not AI-generated).
-- **Stalled deal detection** — configurable inactivity thresholds.
-- **Follow-up management** — schedule, complete, and reschedule follow-ups.
-- **Won/Lost workflows** — controlled closures with mandatory lost reasons.
-- **Project handoff API** — stable boundary for the future Project Delivery module.
-- **Sales dashboard** — real statistics from the database.
-- **Multi-tenancy** — full agency isolation; Agency A never sees Agency B data.
-- **RBAC** — role and permission guards on every protected endpoint.
+- **Interactive Kanban Pipeline:** Drag-and-drop stage progression powered by `@dnd-kit`, supporting multi-currency deals and optimistic UI updates.
+- **Executive KPI Dashboard:** Real-time metrics tracking active deals, win/loss conversion rates, and pipeline value grouped by currency.
+- **Deal Intelligence & Health Scoring:** Automatic win probability calculation and stalled-deal detection based on stage age SLAs and activity frequency.
+- **Activity & Follow-Up Auditing:** Complete history log of stage movements, client communications, and scheduled follow-up tasks.
+- **Project Handoff Workflow:** Smooth operational transition when opportunities reach `CLOSED_WON`.
+- **Role-Based Access Control (RBAC):** Granular permissions supporting `ADMIN`, `MANAGER`, `SALES_REP`, and `OPERATIONS`.
 
 ---
 
 ## 2. Technology Stack
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Frontend | Next.js (App Router) | 16.x |
-| Frontend | React | 19.x |
-| Frontend | TypeScript | 5.x |
-| Frontend | Tailwind CSS | 4.x |
-| Frontend | dnd-kit | 6.x |
-| Frontend | Zod | 3.x |
-| Frontend | React Hook Form | 7.x |
-| Frontend | Lucide React | latest |
-| Backend | NestJS | 9.x |
-| Backend | TypeScript | 5.x |
-| Backend | Node.js | 20.x LTS |
-| Backend | Passport (JWT) | 10.x |
-| Backend | Swagger / OpenAPI | 7.x |
-| Database | PostgreSQL | 15 |
-| ORM | Prisma | 5.x |
-| Testing | Jest + Supertest | 29.x |
-| Testing | Playwright | latest |
-| Dev DB | Docker Compose | latest |
+- **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v4, `@dnd-kit`, TypeScript 5, Lucide Icons.
+- **Backend:** NestJS 10, TypeScript, Passport.js JWT Authentication, Class Validator, RxJS.
+- **Database & ORM:** PostgreSQL 16, Prisma ORM 5.
+- **Quality Assurance & Testing:** Jest, Playwright E2E, ESLint, TypeScript Strict Mode.
+- **Infrastructure:** Docker & Docker Compose.
 
 ---
 
-## 3. Architecture
+## 3. Project Folder Structure
 
+```text
+Agency-os-sales-pipeline/
+├── backend/                  # NestJS API application
+│   ├── prisma/               # Prisma schema & migration history
+│   │   ├── migrations/       # Version-controlled SQL migrations
+│   │   ├── schema.prisma     # Relational database schema
+│   │   └── seed.ts           # Development seed data script
+│   ├── src/                  # NestJS application modules
+│   │   ├── auth/             # Authentication & JWT strategies
+│   │   ├── deals/            # Deal creation, update, stage transition
+│   │   ├── pipelines/        # Pipeline & stage configurations
+│   │   ├── dashboard/        # KPI analytics & statistics
+│   │   ├── activities/       # Deal activity audit log
+│   │   ├── follow-ups/       # Follow-up reminders & tasks
+│   │   ├── probability/      # Win probability engine
+│   │   ├── stalled-detection/# Inactivity SLA detection
+│   │   └── handoff/          # Project handoff management
+│   ├── package.json
+│   └── .env.example          # Safe backend environment template
+├── frontend/                 # Next.js 16 web application
+│   ├── app/                  # Next.js App Router
+│   │   ├── components/       # Reusable UI components
+│   │   ├── layout.tsx        # Root application layout
+│   │   ├── page.tsx          # Main Kanban & Dashboard interface
+│   │   └── lib.ts            # Typed API client & formatting utilities
+│   ├── public/               # Static assets & brand logos
+│   ├── package.json
+│   └── .env.example          # Safe frontend environment template
+├── docs/                     # Technical documentation & handover
+│   ├── API_DOCUMENTATION.md  # Comprehensive API reference
+│   ├── ARCHITECTURE.md       # High-level architecture guide
+│   ├── DATABASE.md           # Relational schema reference
+│   ├── DEPENDENCIES.md       # Package manifest & dependency audit
+│   ├── TECHNICAL_HANDOVER.md # Developer technical handover
+│   └── TESTING.md            # Test suite guide & verification log
+├── docker-compose.yml        # PostgreSQL & PgAdmin service setup
+├── CONTRIBUTING.md           # Development guidelines
+├── LICENSE                   # Open-source license
+├── README.md                 # Project README
+└── .gitignore                # Root Git ignore rules
 ```
-agency-os-sales-pipeline/
-├── frontend/          # Next.js App Router application
-├── backend/           # NestJS REST API
-├── docs/              # Architecture, DB schema, API docs, guides
-├── docker-compose.yml # Local PostgreSQL + pgAdmin
-├── .gitignore
-├── README.md
-├── LICENSE
-└── CONTRIBUTING.md
-```
-
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full architecture diagram and module breakdown.
 
 ---
 
 ## 4. Prerequisites
 
-| Tool | Minimum Version |
-|------|----------------|
-| Node.js | 20.x LTS |
-| npm | 10.x |
-| Docker Desktop | 4.x |
-| Git | 2.x |
+Ensure you have the following installed locally:
+- **Node.js:** `v20.x` or later (LTS recommended)
+- **npm:** `v10.x` or later
+- **Docker Desktop:** Required for running the local PostgreSQL database
 
 ---
 
-## 5. Installation
+## 5. Installation & Setup
 
+### 5.1 Clone Repository
 ```bash
-# 1. Clone the repository
-git clone https://github.com/neirah-tech/agency-os-sales-pipeline.git
+git clone https://github.com/SamsunNuha/agency-os-sales-pipeline.git
 cd agency-os-sales-pipeline
-
-# 2. Install backend dependencies
-cd backend
-npm install
-
-# 3. Install frontend dependencies
-cd ../frontend
-npm install
-cd ..
 ```
+
+### 5.2 Environment Configuration
+Create the local environment files from the provided templates:
+
+1. **Backend Environment:**
+   ```powershell
+   Copy-Item backend\.env.example backend\.env
+   ```
+2. **Frontend Environment:**
+   ```powershell
+   Copy-Item frontend\.env.example frontend\.env.local
+   ```
+
+*Note: The default `.env.example` values align directly with the provided `docker-compose.yml` service configuration.*
 
 ---
 
-## 6. Environment Configuration
+## 6. Database & Docker Setup
 
-### Backend
+Start the PostgreSQL service container:
+```bash
+docker-compose up -d postgres
+```
 
+### Apply Migrations & Generate Client
+From the `backend/` directory:
 ```bash
 cd backend
-cp .env.example .env
-# Edit .env — set DATABASE_URL, JWT_SECRET, FRONTEND_URL
+npm install
+npx prisma generate
+npx prisma migrate dev
 ```
 
-Generate a secure JWT secret:
-
+### Seed Development Data (Optional)
+Populate standard pipelines, demo sales reps, and initial opportunity cards:
 ```bash
-node -e "require('crypto').randomBytes(64).toString('hex').then ? console.log(require('crypto').randomBytes(64).toString('hex')) : undefined"
-# or simply:
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-```
-
-### Frontend
-
-```bash
-cd frontend
-cp .env.example .env.local
-# Edit .env.local — set NEXT_PUBLIC_API_BASE_URL
-```
-
----
-
-## 7. Database Setup
-
-### Start PostgreSQL with Docker Compose
-
-```bash
-# From the project root
-docker compose up -d
-```
-
-This starts:
-- **PostgreSQL** on port `5432`
-- **pgAdmin** on port `5050` (optional UI)
-
-### Run Prisma Migrations
-
-```bash
-cd backend
-npx prisma migrate dev --name init
-```
-
-### Seed the Database
-
-```bash
-cd backend
 npm run seed
-# or: npx prisma db seed
 ```
-
-This creates:
-- Default agency: **Neirah Tech Digital Agency**
-- Admin user: `admin@agency-os.local` / password from `.env` → `SEED_ADMIN_PASSWORD`
-- Sample user: `sales@agency-os.local`
-- Two demo pipelines: **Software Services**, **Digital Marketing**
-- All pipeline stages
-- Demo clients and deals
-
-### View Database in pgAdmin
-
-1. Open [http://localhost:5050](http://localhost:5050)
-2. Login with `PGADMIN_EMAIL` / `PGADMIN_PASSWORD` from `.env`
-3. Add server: Host `postgres`, Port `5432`, DB/User/Password from `.env`
 
 ---
 
-## 8. Running the Application
+## 7. Running the Application
 
-### Backend (NestJS)
-
+### 7.1 Start Backend Server
 ```bash
 cd backend
 npm run start:dev
 ```
+- **Backend API URL:** `http://localhost:5001/api`
+- **Health Check Endpoint:** `http://localhost:5001/api`
 
-API runs at: `http://localhost:5001/api`  
-Swagger UI: `http://localhost:5001/api/docs`
-
-### Frontend (Next.js)
-
+### 7.2 Start Frontend Application
+In a separate terminal:
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
-
-Frontend runs at: `http://localhost:3000`
+- **Frontend Web Application:** `http://localhost:3000`
 
 ---
 
-## 9. Testing
+## 8. Default Credentials & Ports
 
-### Backend Unit & Integration Tests
+| Service | Host URL / Port | Credentials (Dev) |
+| :--- | :--- | :--- |
+| **Frontend UI** | `http://localhost:3000` | — |
+| **Backend API** | `http://localhost:5001/api` | Bearer JWT |
+| **Default Admin Account** | `http://localhost:3000` | `admin@agency-os.local` / `Password123!` |
+| **PostgreSQL Database** | `localhost:5432` | User: `agency_os_user` / DB: `agency_os_sales` |
+| **PgAdmin (Optional)** | `http://localhost:5050` | `admin@agency-os.local` / `changeme_in_env` |
+
+---
+
+## 9. Verification & Testing
+
+To run the full suite of verification commands:
 
 ```bash
-cd backend
-npm run test           # all unit tests
-npm run test:cov       # with coverage
-npm run test:e2e       # API integration tests
-```
-
-### Frontend Tests
-
-```bash
+# Frontend Type Check & Lint
 cd frontend
-npm run test           # Jest + React Testing Library
-```
+npx tsc --noEmit
+npm run lint
 
-### End-to-End Tests (Playwright)
-
-```bash
-# From project root (both servers must be running)
-npx playwright test
-```
-
----
-
-## 10. API Documentation
-
-- **Swagger UI**: `http://localhost:5001/api/docs` (when backend is running)
-- **Markdown docs**: [`docs/API_DOCUMENTATION.md`](docs/API_DOCUMENTATION.md)
-
----
-
-## 11. Production Build
-
-### Backend
-
-```bash
-cd backend
+# Frontend Production Build
 npm run build
-npm run start:prod
-```
 
-### Frontend
-
-```bash
-cd frontend
+# Backend Tests & Build
+cd ../backend
+npm test
 npm run build
-npm run start
+npx prisma validate
 ```
 
----
-
-## 12. Troubleshooting
-
-| Problem | Solution |
-|---------|----------|
-| `DATABASE_URL` error | Ensure Docker Compose is running and `.env` has correct credentials. |
-| `JWT_SECRET` error | Copy `.env.example` to `.env` and generate a secure value. |
-| Frontend can't reach API | Check that the backend is running on port 5001 (`PORT=5001` in `.env`). The frontend fetches from `http://localhost:5001/api`. |
-| Prisma migration errors | Run `npx prisma migrate reset` (destroys data) then `npx prisma migrate dev`. |
-| Port already in use | Change `PORT` in backend `.env` or `POSTGRES_PORT` in docker-compose. |
-| npm peer dep conflicts | Use the exact package versions listed in this README. Do not add `--legacy-peer-deps`. |
+For detailed QA results, see [docs/TESTING.md](file:///D:/Agency-os-sales-pipeline/docs/TESTING.md).
 
 ---
 
-## 13. Demo Login
+## 10. Troubleshooting
 
-After seeding, use these credentials:
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@agency-os.local` | value of `SEED_ADMIN_PASSWORD` in `.env` |
-| Sales User | `sales@agency-os.local` | value of `SEED_ADMIN_PASSWORD` in `.env` |
-
-> **Security Note:** These are development-only seed credentials. Change passwords before any production deployment. The application uses bcrypt for password hashing and JWT for authentication.
+- **Database Connection Error (`P1001`):** Ensure Docker Desktop is active and run `docker ps` to verify the `agency_os_postgres` container is listening on port `5432`.
+- **Hydration / Next.js Build Font Warning:** When building without active internet connectivity, Turbopack may warn regarding the Google Fonts fetch. The build will successfully complete with fallback system typography.
+- **Port Conflict (5000/5001):** If port 5000 is occupied by a system service (e.g. AirPlay/macOS or local service), update `PORT=5001` in `backend/.env` and `NEXT_PUBLIC_API_BASE_URL=http://localhost:5001/api` in `frontend/.env.local`.
 
 ---
 
-## 14. Known Limitations & Integration Points
+## 11. Technical Handover & API Reference
 
-| Item | Status | Notes |
-|------|--------|-------|
-| Email notifications | Placeholder | Integration points prepared in `DealFollowUp` and `DealActivity` service. Connect to shared notification module. |
-| Project module handoff | API boundary ready | `POST /api/deals/:id/project-handoff` returns a stable payload. Project module must consume this endpoint. |
-| Client/Lead module | Client entity included | Reuses the `Client` model. Connect to the shared CRM module when available. |
-| AI probability engine | Rule-based | Current engine is deterministic and explainable. Designed to be replaced by an ML service via the `ProbabilityService` interface. |
-| Real-time updates | Not implemented | WebSocket integration points are prepared. Connect to a shared event bus. |
-| Production auth provider | JWT scaffold only | Replace `AuthModule` with your production identity provider (e.g., Auth0, Keycloak). |
-| Multi-file upload | Not implemented | Deal notes and handoff payload support text. File attachment integration point is documented. |
-
-## Production Readiness Checklist
-- Verify all environment variables are defined and no secrets are committed.
-- Ensure FRONTEND_URL and BACKEND URL are configurable via .env files.
-- Confirm CORS settings allow only the intended frontend origin.
-- Remove any development-only debug UI or tooling.
-- Run `npm run lint` and `npm run build` for both frontend and backend without errors.
-
-## Remaining Blockers
-- Frontend build fails due to missing `emitAuth` function in `app/page.tsx`. Needs implementation or removal.
-- Backend e2e tests fail for authentication flows; likely due to placeholder JWT secret and seed admin password. Set secure `JWT_SECRET` and correct `SEED_ADMIN_PASSWORD` in `.env`.
-- Production deployment target not configured in this repository.
+- Detailed API specifications: [docs/API_DOCUMENTATION.md](file:///D:/Agency-os-sales-pipeline/docs/API_DOCUMENTATION.md)
+- Complete architectural handover: [docs/TECHNICAL_HANDOVER.md](file:///D:/Agency-os-sales-pipeline/docs/TECHNICAL_HANDOVER.md)
+- Dependency audit: [docs/DEPENDENCIES.md](file:///D:/Agency-os-sales-pipeline/docs/DEPENDENCIES.md)

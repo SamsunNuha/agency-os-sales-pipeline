@@ -171,6 +171,16 @@ export const api = {
 
   getPipelines: () => apiFetch<Pipeline[]>('/pipelines'),
   getPipeline: (id: string) => apiFetch<Pipeline>(`/pipelines/${id}`),
+  createPipeline: (data: { name: string; description?: string }) =>
+    apiFetch<Pipeline>('/pipelines', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updatePipelineStages: (pipelineId: string, stages: unknown[]) =>
+    apiFetch<Pipeline>(`/pipelines/${pipelineId}/stages`, {
+      method: 'PATCH',
+      body: JSON.stringify({ stages }),
+    }),
 
   getDeals: (params: Record<string, string | number>) => {
     const q = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
@@ -178,6 +188,18 @@ export const api = {
   },
 
   getDeal: (id: string) => apiFetch<Deal>(`/deals/${id}`),
+
+  createDeal: (data: Record<string, unknown>) =>
+    apiFetch<Deal>('/deals', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateDeal: (id: string, data: Record<string, unknown>) =>
+    apiFetch<Deal>(`/deals/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
 
   moveDealStage: (id: string, stageId: string, note?: string) =>
     apiFetch<Deal>(`/deals/${id}/stage`, {
@@ -215,6 +237,15 @@ export const api = {
     apiFetch<FollowUp>(`/follow-ups/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
+    }),
+
+  getStalledDeals: () =>
+    apiFetch<Deal[]>('/sales/stalled'),
+
+  detectStalledDeals: (thresholdDays = 7) =>
+    apiFetch<{ count: number }>('/sales/stalled/detect', {
+      method: 'POST',
+      body: JSON.stringify({ thresholdDays }),
     }),
 
   initiateHandoff: (dealId: string) =>
