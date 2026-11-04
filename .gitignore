@@ -1,0 +1,90 @@
+# .gitignore — Agency OS Sales Pipeline & Deal Management
+# Root — applies to frontend, backend, and tooling
+
+# ─── Duplicate local copies ──────────────────────────────────
+_working_copy/
+copy_work/
+
+# ─── Environment secrets ──────────────────────────────────────
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.*
+!.env.example
+!.env.*.example
+
+# ─── Node / Dependencies ─────────────────────────────────────
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+
+# ─── Build output and caches ─────────────────────────────────
+.next/
+**/.next/
+out/
+frontend/out/
+dist/
+build/
+**/dist/
+**/build/
+coverage/
+**/coverage/
+.turbo/
+**/.turbo/
+.cache/
+**/.cache/
+frontend/.vercel/
+
+# ─── Prisma ──────────────────────────────────────────────────
+# Keep schema and migrations but ignore generated client
+backend/node_modules/.prisma/
+**/generated/
+
+# ─── TypeScript ──────────────────────────────────────────────
+*.tsbuildinfo
+
+# ─── Testing reports ─────────────────────────────────────────
+playwright-report/
+**/playwright-report/
+test-results/
+**/test-results/
+blob-report/
+playwright/.cache/
+
+# ─── Local database files and dumps ──────────────────────────
+*.dump
+*.sql
+!backend/prisma/migrations/**/*.sql
+*.sqlite
+*.db
+
+# ─── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*~
+*.bak
+
+# ─── IDE / Editors ───────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ─── Logs ────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Private keys and certificates ───────────────────────────
+*.pem
+*.key
+*.p12
+*.pfx
