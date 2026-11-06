@@ -80,14 +80,18 @@ function Sidebar({
   onSelectNav,
   user,
   onLogout,
+  mobileOpen,
+  onCloseMobile,
 }: {
   activeNav: string;
   onSelectNav: (nav: "dashboard" | "kanban" | "deals" | "followups" | "stalled" | "settings") => void;
   user: JwtPayload["user"] | null;
   onLogout: () => void;
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }) {
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       {/* Brand Header */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-badge">
@@ -106,10 +110,20 @@ function Sidebar({
               flexShrink: 0,
             }}
           />
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div className="sidebar-logo-text">Agency OS</div>
             <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>Sales Pipeline</div>
           </div>
+          {onCloseMobile && (
+            <button
+              type="button"
+              className="sidebar-mobile-close"
+              onClick={onCloseMobile}
+              aria-label="Close navigation"
+            >
+              ✕
+            </button>
+          )}
         </div>
       </div>
 
@@ -117,7 +131,10 @@ function Sidebar({
       <nav className="sidebar-nav">
         <button
           className={`nav-item ${activeNav === "dashboard" ? "active" : ""}`}
-          onClick={() => onSelectNav("dashboard")}
+          onClick={() => {
+            onSelectNav("dashboard");
+            onCloseMobile?.();
+          }}
         >
           <span className="nav-item-icon">📊</span>
           <span>Dashboard</span>
@@ -125,7 +142,10 @@ function Sidebar({
 
         <button
           className={`nav-item ${activeNav === "kanban" ? "active" : ""}`}
-          onClick={() => onSelectNav("kanban")}
+          onClick={() => {
+            onSelectNav("kanban");
+            onCloseMobile?.();
+          }}
         >
           <span className="nav-item-icon">📋</span>
           <span>Kanban Board</span>
@@ -133,7 +153,10 @@ function Sidebar({
 
         <button
           className={`nav-item ${activeNav === "deals" ? "active" : ""}`}
-          onClick={() => onSelectNav("deals")}
+          onClick={() => {
+            onSelectNav("deals");
+            onCloseMobile?.();
+          }}
         >
           <span className="nav-item-icon">📑</span>
           <span>All Deals</span>
@@ -141,7 +164,10 @@ function Sidebar({
 
         <button
           className={`nav-item ${activeNav === "followups" ? "active" : ""}`}
-          onClick={() => onSelectNav("followups")}
+          onClick={() => {
+            onSelectNav("followups");
+            onCloseMobile?.();
+          }}
         >
           <span className="nav-item-icon">🔔</span>
           <span>Follow-Ups</span>
@@ -149,7 +175,10 @@ function Sidebar({
 
         <button
           className={`nav-item ${activeNav === "stalled" ? "active" : ""}`}
-          onClick={() => onSelectNav("stalled")}
+          onClick={() => {
+            onSelectNav("stalled");
+            onCloseMobile?.();
+          }}
         >
           <span className="nav-item-icon">⚠️</span>
           <span>Stalled Deals</span>
@@ -157,7 +186,10 @@ function Sidebar({
 
         <button
           className={`nav-item ${activeNav === "settings" ? "active" : ""}`}
-          onClick={() => onSelectNav("settings")}
+          onClick={() => {
+            onSelectNav("settings");
+            onCloseMobile?.();
+          }}
         >
           <span className="nav-item-icon">⚙️</span>
           <span>Pipeline Settings</span>
@@ -214,22 +246,40 @@ function Topbar({
   searchQuery,
   onSearchChange,
   user,
+  onToggleMobileMenu,
 }: {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   user: JwtPayload["user"] | null;
+  onToggleMobileMenu?: () => void;
 }) {
   return (
     <div className="topbar">
-      <div className="topbar-search-wrap">
-        <span className="topbar-search-icon">🔍</span>
-        <input
-          type="text"
-          className="topbar-search"
-          placeholder="Search deals, clients..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+        {onToggleMobileMenu && (
+          <button
+            type="button"
+            className="topbar-hamburger-btn"
+            onClick={onToggleMobileMenu}
+            aria-label="Toggle navigation menu"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+        )}
+        <div className="topbar-search-wrap">
+          <span className="topbar-search-icon">🔍</span>
+          <input
+            type="text"
+            className="topbar-search"
+            placeholder="Search deals, clients..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="topbar-actions">
@@ -3097,6 +3147,7 @@ export default function Home() {
   const [activeNav, setActiveNav] = useState<
     "dashboard" | "kanban" | "deals" | "followups" | "stalled" | "settings"
   >("dashboard");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [pipelines, setPipelines] = useState<Pipeline[]>(INITIAL_PIPELINES);
   const [activePipelineId, setActivePipelineId] = useState<string>("pipe-main");
@@ -3393,12 +3444,26 @@ export default function Home() {
   return (
     <>
       <div className="app-shell">
+        {/* Mobile Backdrop */}
+        {mobileMenuOpen && (
+          <div
+            className="sidebar-backdrop"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Deep Navy Sidebar */}
         <Sidebar
           activeNav={activeNav}
-          onSelectNav={setActiveNav}
+          onSelectNav={(nav) => {
+            setActiveNav(nav);
+            setMobileMenuOpen(false);
+          }}
           user={auth.user}
           onLogout={handleLogout}
+          mobileOpen={mobileMenuOpen}
+          onCloseMobile={() => setMobileMenuOpen(false)}
         />
 
         {/* Main Content Area */}
@@ -3407,6 +3472,7 @@ export default function Home() {
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
             user={auth.user}
+            onToggleMobileMenu={() => setMobileMenuOpen((p) => !p)}
           />
 
           <div className="page-content">
