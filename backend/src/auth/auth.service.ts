@@ -85,7 +85,7 @@ export class AuthService {
 
     if (!passwordValid) {
       throw new UnauthorizedException({
-        message: 'Invalid password. Super Admin password is Admin@1234.',
+        message: 'Invalid credentials. Please check your username/email and password.',
         code: 'INVALID_CREDENTIALS',
       });
     }

@@ -2916,7 +2916,7 @@ function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
         localStorage.setItem("auth_user", JSON.stringify(salesPayload.user));
         onLogin(salesPayload);
       } else {
-        setError("Invalid credentials. For Super Admin, use Username: Admin and Password: Admin@1234. Other users must register first.");
+        setError("Invalid credentials. Please verify your username/email and password. Sales users must register first.");
       }
     } finally {
       setLoading(false);
@@ -3157,24 +3157,6 @@ function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
           {/* ─── Mode 1: Sign In ─── */}
           {authMode === "login" ? (
             <form onSubmit={handleLoginSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {/* Super Admin Notice Card */}
-              <div
-                style={{
-                  background: "linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)",
-                  border: "1px solid #bfdbfe",
-                  borderRadius: 12,
-                  padding: "10px 14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <span style={{ fontSize: 18 }}>🛡️</span>
-                <div style={{ fontSize: 12, color: "#1e3a8a", lineHeight: 1.4 }}>
-                  <strong>Super Admin Login:</strong> Username: <code style={{ background: "#ffffff", padding: "1px 5px", borderRadius: 4, fontWeight: 700 }}>Admin</code> &bull; Password: <code style={{ background: "#ffffff", padding: "1px 5px", borderRadius: 4, fontWeight: 700 }}>Admin@1234</code>
-                </div>
-              </div>
-
               <div>
                 <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "#334155", marginBottom: 6 }}>
                   Username or Email
@@ -3195,7 +3177,7 @@ function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
                     type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter 'Admin' or your registered email"
+                    placeholder="Enter username or email"
                     required
                     autoFocus
                     style={{
@@ -3231,7 +3213,7 @@ function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password (e.g. Admin@1234)"
+                    placeholder="Enter your password"
                     required
                     style={{
                       width: "100%",
