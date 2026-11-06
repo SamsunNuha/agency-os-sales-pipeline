@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProbabilityService } from '../probability/probability.service';
@@ -40,10 +41,20 @@ export class DealsService {
   // ─────────────────────────────────────────────────────────────────────────
 
   async create(dto: CreateDealDto, user: JwtUser) {
+    const isAdmin = user.roles.includes('ADMIN');
+    const effectiveOwnerId = isAdmin ? (dto.ownerId || user.sub) : user.sub;
+
+    if (!isAdmin && dto.ownerId && dto.ownerId !== user.sub) {
+      throw new ForbiddenException({
+        message: 'Sales users can only create deals assigned to themselves.',
+        code: 'FORBIDDEN',
+      });
+    }
+
     // Validate pipeline, stage, client, and owner all belong to the same agency
     await this.validatePipelineStage(dto.pipelineId, dto.stageId, user.agencyId);
     await this.validateClient(dto.clientId, user.agencyId);
-    await this.validateOwner(dto.ownerId, user.agencyId);
+    await this.validateOwner(effectiveOwnerId, user.agencyId);
 
     const deal = await this.prisma.$transaction(async (tx) => {
       const created = await tx.deal.create({
@@ -55,7 +66,7 @@ export class DealsService {
           serviceCategory: dto.serviceCategory,
           expectedValue: dto.expectedValue,
           currency: dto.currency,
-          ownerId: dto.ownerId,
+          ownerId: effectiveOwnerId,
           pipelineId: dto.pipelineId,
           stageId: dto.stageId,
           expectedCloseDate: new Date(dto.expectedCloseDate),
@@ -127,6 +138,8 @@ export class DealsService {
       limit = 20,
     } = query;
 
+    const isAdmin = user.roles.includes('ADMIN');
+
     const where: Prisma.DealWhereInput = {
       agencyId: user.agencyId,
       ...(search && {
@@ -138,7 +151,7 @@ export class DealsService {
       ...(pipelineId && { pipelineId }),
       ...(stageId && { stageId }),
       ...(clientId && { clientId }),
-      ...(ownerId && { ownerId }),
+      ...(isAdmin ? (ownerId ? { ownerId } : {}) : { ownerId: user.sub }),
       ...(state && { state: state as DealState }),
     };
 
@@ -207,6 +220,13 @@ export class DealsService {
       throw new NotFoundException({ message: 'Deal not found', code: 'DEAL_NOT_FOUND' });
     }
 
+    if (!user.roles.includes('ADMIN') && deal.ownerId !== user.sub) {
+      throw new ForbiddenException({
+        message: 'You do not have permission to view this deal.',
+        code: 'FORBIDDEN',
+      });
+    }
+
     return deal;
   }
 
@@ -216,6 +236,21 @@ export class DealsService {
 
   async update(id: string, dto: UpdateDealDto, user: JwtUser) {
     const deal = await this.requireDeal(id, user.agencyId);
+
+    if (!user.roles.includes('ADMIN')) {
+      if (deal.ownerId !== user.sub) {
+        throw new ForbiddenException({
+          message: 'You can only edit deals assigned to you.',
+          code: 'FORBIDDEN',
+        });
+      }
+      if (dto.ownerId && dto.ownerId !== user.sub) {
+        throw new ForbiddenException({
+          message: 'Sales users cannot reassign deal ownership.',
+          code: 'FORBIDDEN',
+        });
+      }
+    }
 
     if (deal.state !== DealState.ACTIVE) {
       throw new BadRequestException({
@@ -296,6 +331,13 @@ export class DealsService {
 
   async moveStage(id: string, dto: MoveDealStageDto, user: JwtUser) {
     const deal = await this.requireDeal(id, user.agencyId);
+
+    if (!user.roles.includes('ADMIN') && deal.ownerId !== user.sub) {
+      throw new ForbiddenException({
+        message: 'You can only move deals assigned to you.',
+        code: 'FORBIDDEN',
+      });
+    }
 
     if (deal.state !== DealState.ACTIVE) {
       throw new BadRequestException({
@@ -402,6 +444,13 @@ export class DealsService {
   async markWon(id: string, user: JwtUser) {
     const deal = await this.requireDeal(id, user.agencyId);
 
+    if (!user.roles.includes('ADMIN') && deal.ownerId !== user.sub) {
+      throw new ForbiddenException({
+        message: 'You can only close deals assigned to you.',
+        code: 'FORBIDDEN',
+      });
+    }
+
     if (deal.state !== DealState.ACTIVE) {
       throw new ConflictException({
         message: `Deal is already ${deal.state.toLowerCase()}`,
@@ -479,6 +528,13 @@ export class DealsService {
 
   async markLost(id: string, dto: MarkDealLostDto, user: JwtUser) {
     const deal = await this.requireDeal(id, user.agencyId);
+
+    if (!user.roles.includes('ADMIN') && deal.ownerId !== user.sub) {
+      throw new ForbiddenException({
+        message: 'You can only close deals assigned to you.',
+        code: 'FORBIDDEN',
+      });
+    }
 
     if (deal.state !== DealState.ACTIVE) {
       throw new ConflictException({
@@ -559,6 +615,13 @@ export class DealsService {
   // ─────────────────────────────────────────────────────────────────────────
 
   async archive(id: string, user: JwtUser) {
+    if (!user.roles.includes('ADMIN')) {
+      throw new ForbiddenException({
+        message: 'Only Super Admin can archive deals.',
+        code: 'FORBIDDEN',
+      });
+    }
+
     const deal = await this.requireDeal(id, user.agencyId);
 
     if (deal.state === DealState.ARCHIVED) {

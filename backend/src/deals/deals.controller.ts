@@ -26,6 +26,7 @@ import { MarkDealLostDto } from './dto/mark-deal-lost.dto';
 import { DealQueryDto } from './dto/deal-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtUser } from '../common/types/jwt-user.type';
 
@@ -95,8 +96,9 @@ export class DealsController {
   }
 
   @Delete(':id')
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Archive a deal' })
+  @ApiOperation({ summary: 'Archive a deal (Super Admin only)' })
   async archive(@Param('id') id: string, @CurrentUser() user: JwtUser) {
     return this.dealsService.archive(id, user);
   }

@@ -84,12 +84,14 @@ function Sidebar({
   onCloseMobile,
 }: {
   activeNav: string;
-  onSelectNav: (nav: "dashboard" | "kanban" | "deals" | "followups" | "stalled" | "settings") => void;
+  onSelectNav: (nav: "dashboard" | "kanban" | "deals" | "followups" | "stalled" | "settings" | "users") => void;
   user: JwtPayload["user"] | null;
   onLogout: () => void;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
 }) {
+  const isAdmin = user?.roles?.includes("ADMIN");
+
   return (
     <aside className={`sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       {/* Brand Header */}
@@ -112,7 +114,9 @@ function Sidebar({
           />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="sidebar-logo-text">Agency OS</div>
-            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>Sales Pipeline</div>
+            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>
+              {isAdmin ? "Super Admin Portal" : "Sales Representative"}
+            </div>
           </div>
           {onCloseMobile && (
             <button
@@ -137,7 +141,7 @@ function Sidebar({
           }}
         >
           <span className="nav-item-icon">📊</span>
-          <span>Dashboard</span>
+          <span>{isAdmin ? "Agency Dashboard" : "My Dashboard"}</span>
         </button>
 
         <button
@@ -148,7 +152,7 @@ function Sidebar({
           }}
         >
           <span className="nav-item-icon">📋</span>
-          <span>Kanban Board</span>
+          <span>{isAdmin ? "Kanban Board" : "My Pipeline"}</span>
         </button>
 
         <button
@@ -159,7 +163,7 @@ function Sidebar({
           }}
         >
           <span className="nav-item-icon">📑</span>
-          <span>All Deals</span>
+          <span>{isAdmin ? "All Deals" : "My Deals"}</span>
         </button>
 
         <button
@@ -170,7 +174,7 @@ function Sidebar({
           }}
         >
           <span className="nav-item-icon">🔔</span>
-          <span>Follow-Ups</span>
+          <span>{isAdmin ? "Follow-Ups" : "My Follow-Ups"}</span>
         </button>
 
         <button
@@ -184,16 +188,32 @@ function Sidebar({
           <span>Stalled Deals</span>
         </button>
 
-        <button
-          className={`nav-item ${activeNav === "settings" ? "active" : ""}`}
-          onClick={() => {
-            onSelectNav("settings");
-            onCloseMobile?.();
-          }}
-        >
-          <span className="nav-item-icon">⚙️</span>
-          <span>Pipeline Settings</span>
-        </button>
+        {/* Super Admin Only Sections */}
+        {isAdmin && (
+          <>
+            <button
+              className={`nav-item ${activeNav === "settings" ? "active" : ""}`}
+              onClick={() => {
+                onSelectNav("settings");
+                onCloseMobile?.();
+              }}
+            >
+              <span className="nav-item-icon">⚙️</span>
+              <span>Pipeline Settings</span>
+            </button>
+
+            <button
+              className={`nav-item ${activeNav === "users" ? "active" : ""}`}
+              onClick={() => {
+                onSelectNav("users");
+                onCloseMobile?.();
+              }}
+            >
+              <span className="nav-item-icon">👥</span>
+              <span>Manage Users</span>
+            </button>
+          </>
+        )}
       </nav>
 
       {/* User Profile in Sidebar Footer */}
@@ -205,7 +225,7 @@ function Sidebar({
                 width: 34,
                 height: 34,
                 borderRadius: "50%",
-                background: "#334155",
+                background: isAdmin ? "#1e40af" : "#334155",
                 color: "#ffffff",
                 display: "flex",
                 alignItems: "center",
@@ -222,7 +242,7 @@ function Sidebar({
                 {user.firstName} {user.lastName}
               </div>
               <div className="sidebar-user-role truncate">
-                {user.roles.includes("ADMIN") ? "Admin ▾" : "Sales ▾"}
+                {isAdmin ? "🛡️ Super Admin" : "💼 Sales User"}
               </div>
             </div>
           </div>
@@ -283,6 +303,24 @@ function Topbar({
       </div>
 
       <div className="topbar-actions">
+        {user && (
+          <span
+            style={{
+              fontSize: 11.5,
+              fontWeight: 700,
+              padding: "4px 10px",
+              borderRadius: 14,
+              background: user.roles?.includes("ADMIN") ? "#eff6ff" : "#fffbeb",
+              color: user.roles?.includes("ADMIN") ? "#1d4ed8" : "#92400e",
+              border: `1px solid ${user.roles?.includes("ADMIN") ? "#bfdbfe" : "#fde68a"}`,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            {user.roles?.includes("ADMIN") ? "🛡️ Super Admin" : "💼 Sales User"}
+          </span>
+        )}
         <button className="topbar-icon-btn" aria-label="Notifications">
           🔔
         </button>
@@ -297,7 +335,16 @@ function Topbar({
 /* =========================================================
    Screen 1: Dashboard View
    ========================================================= */
-function DashboardView({ deals, onNavigateDeals }: { deals: Deal[]; onNavigateDeals: () => void }) {
+function DashboardView({
+  deals,
+  onNavigateDeals,
+  user,
+}: {
+  deals: Deal[];
+  onNavigateDeals: () => void;
+  user?: JwtPayload["user"] | null;
+}) {
+  const isAdmin = user?.roles?.includes("ADMIN");
   const activeDeals = deals.filter((d) => d.state === "ACTIVE");
   const wonDeals = deals.filter((d) => d.state === "WON");
   const pipelineVal = activeDeals.reduce((sum, d) => sum + Number(d.expectedValue || 0), 0);
@@ -309,8 +356,26 @@ function DashboardView({ deals, onNavigateDeals }: { deals: Deal[]; onNavigateDe
       {/* Header */}
       <div className="page-header-row">
         <div>
-          <h1 className="page-title">Dashboard</h1>
-          <div className="page-subtitle">Your sales performance at a glance</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <h1 className="page-title">{isAdmin ? "Agency Dashboard" : "My Sales Dashboard"}</h1>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                padding: "3px 10px",
+                borderRadius: 20,
+                background: isAdmin ? "#dbeafe" : "#fef3c7",
+                color: isAdmin ? "#1d4ed8" : "#b45309",
+              }}
+            >
+              {isAdmin ? "🛡️ Super Admin (Full Agency)" : "💼 Sales Rep (My Performance)"}
+            </span>
+          </div>
+          <div className="page-subtitle">
+            {isAdmin
+              ? "Comprehensive agency-wide revenue, pipeline volume, and rep activity"
+              : "Your individual deals, assigned pipeline conversion, and follow-ups"}
+          </div>
         </div>
         <div className="page-header-actions">
           <select className="filter-select">
@@ -758,13 +823,16 @@ function AllDealsView({
   onOpenDetail,
   onNewDeal,
   pipelines,
+  user,
 }: {
   deals: Deal[];
   onPageChange: (p: number) => void;
   onOpenDetail: (d: Deal) => void;
   onNewDeal: () => void;
   pipelines: Pipeline[];
+  user?: JwtPayload["user"] | null;
 }) {
+  const isAdmin = user?.roles?.includes("ADMIN");
   const [pipelineFilter, setPipelineFilter] = useState("");
   const [stageFilter, setStageFilter] = useState("");
   const [stateFilter, setStateFilter] = useState("");
@@ -803,8 +871,12 @@ function AllDealsView({
       {/* Header */}
       <div className="page-header-row">
         <div>
-          <h1 className="page-title">All Deals</h1>
-          <div className="page-subtitle">Manage and track all your deals</div>
+          <h1 className="page-title">{isAdmin ? "All Deals (Agency Overview)" : "My Deals"}</h1>
+          <div className="page-subtitle">
+            {isAdmin
+              ? "Full portfolio view across all reps with archive and edit authority"
+              : "Manage and track deals assigned directly to you"}
+          </div>
         </div>
         <div className="page-header-actions">
           <select
@@ -2398,12 +2470,14 @@ function EmptyState({ onNewDeal }: { onNewDeal: () => void }) {
    ========================================================= */
 function DealDetailModal({
   deal,
+  currentUser,
   onClose,
   onRefresh,
   onOpenEdit,
   toast,
 }: {
   deal: Deal;
+  currentUser?: JwtPayload["user"] | null;
   onClose: () => void;
   onRefresh: () => void;
   onOpenEdit: (d: Deal) => void;
@@ -2412,6 +2486,7 @@ function DealDetailModal({
   const [fullDeal, setFullDeal] = useState<Deal | null>(null);
   const [tab, setTab] = useState<"overview" | "probability" | "activity" | "followups">("overview");
   const [busy, setBusy] = useState(false);
+  const isAdmin = currentUser?.roles?.includes("ADMIN");
 
   useEffect(() => {
     api
@@ -2423,6 +2498,24 @@ function DealDetailModal({
   const d = fullDeal || deal;
   const prob = d.intelligence?.calculatedProbability ?? 75;
   const stageClass = getStageClass(d.stage?.name || "Proposal");
+
+  async function handleArchive() {
+    if (!isAdmin) {
+      toast.error("Restricted: Only Super Admin can archive deals.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.archiveDeal(d.id);
+      toast.success("Deal archived successfully!");
+      onRefresh();
+      onClose();
+    } catch (err: unknown) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function handleMarkWon() {
     setBusy(true);
@@ -2513,9 +2606,25 @@ function DealDetailModal({
             <button className="btn btn-secondary btn-xs" onClick={() => onOpenEdit(d)}>
               ✏️ Edit
             </button>
-            <button className="btn btn-secondary btn-xs" onClick={() => toast.info("Deal archived")}>
-              📁 Archive
-            </button>
+            {isAdmin ? (
+              <button className="btn btn-secondary btn-xs" disabled={busy} onClick={handleArchive}>
+                📁 Archive
+              </button>
+            ) : (
+              <span
+                style={{
+                  fontSize: 11,
+                  background: "#f1f5f9",
+                  color: "#64748b",
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  fontWeight: 600,
+                }}
+                title="Only Super Admin can archive deals"
+              >
+                🔒 Archive (Admin Only)
+              </span>
+            )}
             <button className="btn btn-outline-red btn-xs" disabled={busy} onClick={handleMarkLost}>
               ✕ Mark Lost
             </button>
@@ -3469,13 +3578,163 @@ function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
 }
 
 /* =========================================================
+   Screen: User Management View (Super Admin Only)
+   ========================================================= */
+function UserManagementView({ toast }: { toast: ReturnType<typeof useToasts> }) {
+  const [users, setUsers] = useState<
+    Array<{
+      id: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      isActive: boolean;
+      createdAt: string;
+      roles: string[];
+    }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .getUsers()
+      .then((data) => setUsers(data))
+      .catch((err) => {
+        toast.error((err as Error).message);
+        // Fallback display
+        setUsers([
+          {
+            id: "u-superadmin",
+            email: "admin@agency-os.local",
+            firstName: "Super",
+            lastName: "Admin",
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            roles: ["ADMIN"],
+          },
+          {
+            id: "u-sales",
+            email: "sales@agencyos.local",
+            firstName: "Sales",
+            lastName: "User",
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            roles: ["SALES"],
+          },
+        ]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div>
+      <div className="page-header-row">
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <h1 className="page-title">User Management</h1>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                padding: "3px 10px",
+                borderRadius: 20,
+                background: "#dbeafe",
+                color: "#1d4ed8",
+              }}
+            >
+              🛡️ Super Admin Control
+            </span>
+          </div>
+          <div className="page-subtitle">
+            Manage agency team members, sales user accounts, and Role-Based Access Control (RBAC)
+          </div>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 20, overflowX: "auto" }}>
+        {loading ? (
+          <div style={{ padding: 30, textAlign: "center", color: "#64748b" }}>Loading users...</div>
+        ) : (
+          <table className="deals-table" style={{ width: "100%" }}>
+            <thead>
+              <tr>
+                <th>User Name</th>
+                <th>Work Email</th>
+                <th>Assigned Role</th>
+                <th>Status</th>
+                <th>Account Created</th>
+                <th>System Access</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => {
+                const isSuper = u.roles.includes("ADMIN");
+                return (
+                  <tr key={u.id}>
+                    <td style={{ fontWeight: 700, color: "#0f172a" }}>
+                      {u.firstName} {u.lastName}
+                    </td>
+                    <td style={{ color: "#475569" }}>{u.email}</td>
+                    <td>
+                      <span
+                        style={{
+                          padding: "3px 9px",
+                          borderRadius: 12,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          background: isSuper ? "#dbeafe" : "#fef3c7",
+                          color: isSuper ? "#1e40af" : "#92400e",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        {isSuper ? "🛡️ Super Admin" : "💼 Sales User"}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          color: u.isActive ? "#16a34a" : "#dc2626",
+                          fontWeight: 600,
+                          fontSize: 12.5,
+                        }}
+                      >
+                        {u.isActive ? "● Active" : "○ Inactive"}
+                      </span>
+                    </td>
+                    <td style={{ color: "#64748b", fontSize: 12 }}>
+                      {new Date(u.createdAt).toLocaleDateString()}
+                    </td>
+                    <td style={{ fontSize: 12, color: "#334155" }}>
+                      {isSuper ? (
+                        <span style={{ color: "#2563eb", fontWeight: 600 }}>
+                          Full Control (Pipelines, Users, All Deals)
+                        </span>
+                      ) : (
+                        <span style={{ color: "#475569" }}>
+                          Sales Flow (Own Deals, Follow-ups)
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
    Main Home Application
    ========================================================= */
 type StoredAuth = JwtPayload | null;
 
 export default function Home() {
   const [activeNav, setActiveNav] = useState<
-    "dashboard" | "kanban" | "deals" | "followups" | "stalled" | "settings"
+    "dashboard" | "kanban" | "deals" | "followups" | "stalled" | "settings" | "users"
   >("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -3810,6 +4069,7 @@ export default function Home() {
               <DashboardView
                 deals={deals}
                 onNavigateDeals={() => setActiveNav("deals")}
+                user={auth.user}
               />
             )}
 
@@ -3835,6 +4095,7 @@ export default function Home() {
                 onOpenDetail={setDetailDeal}
                 onNewDeal={() => setCreateDealOpen(true)}
                 pipelines={pipelines}
+                user={auth.user}
               />
             )}
 
@@ -3857,13 +4118,41 @@ export default function Home() {
             )}
 
             {activeNav === "settings" && (
-              <PipelineSettingsView
-                pipelines={pipelines}
-                activePipelineId={activePipelineId}
-                onSelectPipeline={setActivePipelineId}
-                onCreatePipeline={handleCreatePipeline}
-                toast={toast}
-              />
+              auth.user.roles.includes("ADMIN") ? (
+                <PipelineSettingsView
+                  pipelines={pipelines}
+                  activePipelineId={activePipelineId}
+                  onSelectPipeline={setActivePipelineId}
+                  onCreatePipeline={handleCreatePipeline}
+                  toast={toast}
+                />
+              ) : (
+                <div className="card" style={{ padding: 40, textAlign: "center", maxWidth: 580, margin: "40px auto" }}>
+                  <div style={{ fontSize: 44, marginBottom: 12 }}>🔒</div>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>
+                    Super Admin Access Required
+                  </h3>
+                  <p style={{ color: "#64748b", fontSize: 13.5, lineHeight: 1.6 }}>
+                    Pipeline architecture, custom stages, and agency configurations can only be modified by Super Admin accounts.
+                  </p>
+                </div>
+              )
+            )}
+
+            {activeNav === "users" && (
+              auth.user.roles.includes("ADMIN") ? (
+                <UserManagementView toast={toast} />
+              ) : (
+                <div className="card" style={{ padding: 40, textAlign: "center", maxWidth: 580, margin: "40px auto" }}>
+                  <div style={{ fontSize: 44, marginBottom: 12 }}>🔒</div>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>
+                    Super Admin Access Required
+                  </h3>
+                  <p style={{ color: "#64748b", fontSize: 13.5, lineHeight: 1.6 }}>
+                    User role assignments, agency membership, and permissions are restricted to Super Admin.
+                  </p>
+                </div>
+              )
             )}
           </div>
         </div>
@@ -3899,6 +4188,7 @@ export default function Home() {
       {detailDeal && (
         <DealDetailModal
           deal={detailDeal}
+          currentUser={auth.user}
           onClose={() => setDetailDeal(null)}
           onRefresh={loadDeals}
           onOpenEdit={(d) => {

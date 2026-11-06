@@ -141,6 +141,8 @@ export class FollowUpsService {
   }
 
   async getAgencyFollowUps(user: JwtUser, status?: string) {
+    const isAdmin = user.roles.includes('ADMIN');
+
     // Sync overdue statuses
     const now = new Date();
     await this.prisma.dealFollowUp.updateMany({
@@ -156,6 +158,12 @@ export class FollowUpsService {
       where: {
         agencyId: user.agencyId,
         ...(status && { status: status as FollowUpStatus }),
+        ...(!isAdmin && {
+          OR: [
+            { createdById: user.sub },
+            { deal: { ownerId: user.sub } },
+          ],
+        }),
       },
       include: {
         deal: { select: { id: true, title: true, client: { select: { name: true } } } },

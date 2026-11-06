@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { PipelinesService } from './pipelines.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtUser } from '../common/types/jwt-user.type';
 import { IsString, IsOptional, IsArray, IsBoolean, IsNumber, IsInt, Min, Max } from 'class-validator';
@@ -55,19 +56,22 @@ export class PipelinesController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a new pipeline' })
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Create a new pipeline (Super Admin only)' })
   async create(@Body() dto: CreatePipelineDto, @CurrentUser() user: JwtUser) {
     return this.pipelinesService.create(dto, user);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update pipeline name/description/status' })
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Update pipeline name/description/status (Super Admin only)' })
   async update(@Param('id') id: string, @Body() dto: UpdatePipelineDto, @CurrentUser() user: JwtUser) {
     return this.pipelinesService.update(id, dto, user);
   }
 
   @Patch(':id/stages')
-  @ApiOperation({ summary: 'Create, update, reorder, and delete pipeline stages' })
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Create, update, reorder, and delete pipeline stages (Super Admin only)' })
   async updateStages(@Param('id') id: string, @Body() dto: UpdateStagesDto, @CurrentUser() user: JwtUser) {
     return this.pipelinesService.updateStages(id, dto.stages, user);
   }

@@ -3,6 +3,8 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagg
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtUser } from '../common/types/jwt-user.type';
 
@@ -37,5 +39,16 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@CurrentUser() user: JwtUser) {
     return this.authService.getProfile(user.sub);
+  }
+
+  @Get('users')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'List all users in the agency (Super Admin only)' })
+  @ApiResponse({ status: 200, description: 'List of users with roles' })
+  @ApiResponse({ status: 403, description: 'Forbidden for non-admin users' })
+  async getUsers(@CurrentUser() user: JwtUser) {
+    return this.authService.getAgencyUsers(user.agencyId);
   }
 }

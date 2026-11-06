@@ -226,4 +226,34 @@ export class AuthService {
       roles: user.roles.map((ur) => ur.role.name),
     };
   }
+
+  async getAgencyUsers(agencyId: string) {
+    const users = await this.prisma.user.findMany({
+      where: { agencyId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        isActive: true,
+        createdAt: true,
+        roles: {
+          include: {
+            role: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return users.map((u) => ({
+      id: u.id,
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      isActive: u.isActive,
+      createdAt: u.createdAt,
+      roles: u.roles.map((r) => r.role.name),
+    }));
+  }
 }

@@ -258,4 +258,17 @@ export const api = {
     apiFetch<Record<string, unknown>>(`/deals/${dealId}/project-handoff`, { method: 'POST' }),
 
   getDashboard: () => apiFetch<Record<string, unknown>>('/sales/dashboard'),
+
+  getUsers: () =>
+    apiFetch<
+      Array<{
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        isActive: boolean;
+        createdAt: string;
+        roles: string[];
+      }>
+    >('/auth/users'),
 };

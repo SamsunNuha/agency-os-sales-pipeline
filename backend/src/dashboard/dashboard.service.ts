@@ -8,6 +8,10 @@ export class DashboardService {
 
   async getStats(user: JwtUser) {
     const agencyId = user.agencyId;
+    const isAdmin = user.roles.includes('ADMIN');
+    const dealOwnerFilter = isAdmin ? {} : { ownerId: user.sub };
+    const followUpOwnerFilter = isAdmin ? {} : { deal: { ownerId: user.sub } };
+
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const nextThirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -28,22 +32,22 @@ export class DashboardService {
       upcomingFollowUps,
     ] = await Promise.all([
       // Count active deals
-      this.prisma.deal.count({ where: { agencyId, state: 'ACTIVE' } }),
+      this.prisma.deal.count({ where: { agencyId, state: 'ACTIVE', ...dealOwnerFilter } }),
       // Count won deals total
-      this.prisma.deal.count({ where: { agencyId, state: 'WON' } }),
+      this.prisma.deal.count({ where: { agencyId, state: 'WON', ...dealOwnerFilter } }),
       // Count lost deals total
-      this.prisma.deal.count({ where: { agencyId, state: 'LOST' } }),
+      this.prisma.deal.count({ where: { agencyId, state: 'LOST', ...dealOwnerFilter } }),
       // Won deals in last 30 days
       this.prisma.deal.count({
-        where: { agencyId, state: 'WON', wonAt: { gte: thirtyDaysAgo } },
+        where: { agencyId, state: 'WON', wonAt: { gte: thirtyDaysAgo }, ...dealOwnerFilter },
       }),
       // Overdue follow-ups
       this.prisma.dealFollowUp.count({
-        where: { agencyId, status: 'OVERDUE' },
+        where: { agencyId, status: 'OVERDUE', ...followUpOwnerFilter },
       }),
       // Stalled deals
       this.prisma.deal.count({
-        where: { agencyId, state: 'ACTIVE', intelligence: { isStalled: true } },
+        where: { agencyId, state: 'ACTIVE', intelligence: { isStalled: true }, ...dealOwnerFilter },
       }),
       // Upcoming expected closures (next 30 days)
       this.prisma.deal.count({
@@ -51,19 +55,20 @@ export class DashboardService {
           agencyId,
           state: 'ACTIVE',
           expectedCloseDate: { gte: now, lte: nextThirtyDays },
+          ...dealOwnerFilter,
         },
       }),
       // Active deal values grouped by currency
       this.prisma.deal.groupBy({
         by: ['currency'],
-        where: { agencyId, state: 'ACTIVE' },
+        where: { agencyId, state: 'ACTIVE', ...dealOwnerFilter },
         _sum: { expectedValue: true },
         _count: true,
       }),
       // Won deal values grouped by currency
       this.prisma.deal.groupBy({
         by: ['currency'],
-        where: { agencyId, state: 'WON' },
+        where: { agencyId, state: 'WON', ...dealOwnerFilter },
         _sum: { expectedValue: true },
       }),
       // Pipeline performance
@@ -77,7 +82,7 @@ export class DashboardService {
           },
           stages: {
             include: {
-              _count: { select: { deals: { where: { state: 'ACTIVE' } } } },
+              _count: { select: { deals: { where: { state: 'ACTIVE', ...dealOwnerFilter } } } },
             },
             orderBy: { order: 'asc' },
           },
@@ -87,13 +92,13 @@ export class DashboardService {
       this.prisma.pipelineStage.findMany({
         where: { agencyId },
         include: {
-          _count: { select: { deals: { where: { state: 'ACTIVE' } } } },
+          _count: { select: { deals: { where: { state: 'ACTIVE', ...dealOwnerFilter } } } },
         },
         orderBy: [{ pipelineId: 'asc' }, { order: 'asc' }],
       }),
       // Recent activities (last 20)
       this.prisma.dealActivity.findMany({
-        where: { agencyId },
+        where: { agencyId, ...(isAdmin ? {} : { deal: { ownerId: user.sub } }) },
         include: {
           deal: { select: { id: true, title: true } },
           performedBy: { select: { id: true, firstName: true, lastName: true } },
@@ -107,6 +112,7 @@ export class DashboardService {
           agencyId,
           status: 'UPCOMING',
           scheduledAt: { gte: now },
+          ...followUpOwnerFilter,
         },
         include: {
           deal: { select: { id: true, title: true, client: { select: { name: true } } } },
@@ -123,7 +129,7 @@ export class DashboardService {
     // Build weighted forecast (sum of value * probability per currency)
     const weightedForecastByCurrency: Record<string, number> = {};
     const activeDealDetails = await this.prisma.deal.findMany({
-      where: { agencyId, state: 'ACTIVE' },
+      where: { agencyId, state: 'ACTIVE', ...dealOwnerFilter },
       select: { expectedValue: true, currency: true, manualProbability: true, intelligence: { select: { calculatedProbability: true } } },
     });
 
@@ -138,6 +144,7 @@ export class DashboardService {
       where: {
         agencyId,
         state: 'ACTIVE',
+        ...dealOwnerFilter,
         OR: [
           { intelligence: { isStalled: true } },
           { expectedCloseDate: { lt: now } },
@@ -152,6 +159,8 @@ export class DashboardService {
     });
 
     return {
+      scope: isAdmin ? 'AGENCY' : 'PERSONAL',
+      role: isAdmin ? 'ADMIN' : 'SALES',
       summary: {
         totalActiveDeals: totalActive,
         totalWonDeals: totalWon,
