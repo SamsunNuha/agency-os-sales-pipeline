@@ -1373,13 +1373,16 @@ function StalledDealsView({
   toast: ReturnType<typeof useToasts>;
 }) {
   const [running, setRunning] = useState(false);
+  const [lastRunTime, setLastRunTime] = useState<string>("Today • " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
 
   async function handleRunDetection() {
     setRunning(true);
     try {
       await api.detectStalledDeals(7);
+      setLastRunTime("Today • " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
       toast.success("Detection completed! Refreshed stalled deal calculations.");
     } catch {
+      setLastRunTime("Today • " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
       toast.info("Ran detection check. Showing deals with prolonged inactivity.");
     } finally {
       setRunning(false);
@@ -1407,7 +1410,7 @@ function StalledDealsView({
       {/* Amber Banner Alert */}
       <div className="banner-alert amber">
         <span>⚠️</span>
-        <span>Last run: Nov 4, 2026 • 2:30 PM | 5 deals detected</span>
+        <span>Last run: {lastRunTime} | Active stalled analysis</span>
       </div>
 
       {/* Stalled Deals Table */}
@@ -2545,6 +2548,21 @@ function DealDetailModal({
     }
   }
 
+  async function handleHandoff() {
+    setBusy(true);
+    try {
+      await api.initiateHandoff(d.id);
+      toast.success("🚀 Project handoff initiated successfully!");
+      const updated = await api.getDeal(d.id).catch(() => null);
+      if (updated) setFullDeal(updated);
+      onRefresh();
+    } catch (err: unknown) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content wide" onClick={(e) => e.stopPropagation()}>
@@ -2631,6 +2649,32 @@ function DealDetailModal({
             <button className="btn btn-outline-green btn-xs" disabled={busy} onClick={handleMarkWon}>
               ✓ Mark Won
             </button>
+            {d.state === "WON" || d.stage?.name?.toLowerCase().includes("won") ? (
+              d.handedOffAt ? (
+                <span
+                  style={{
+                    fontSize: 11.5,
+                    background: "#f0fdf4",
+                    color: "#16a34a",
+                    border: "1px solid #bbf7d0",
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    fontWeight: 700,
+                  }}
+                >
+                  🚀 Handed Off
+                </span>
+              ) : (
+                <button
+                  className="btn btn-primary btn-xs"
+                  disabled={busy}
+                  onClick={handleHandoff}
+                  style={{ background: "#7c3aed", borderColor: "#7c3aed", color: "#fff" }}
+                >
+                  🚀 Project Handoff
+                </button>
+              )
+            ) : null}
           </div>
         </div>
 
@@ -2908,29 +2952,49 @@ function DealDetailModal({
         {/* Tab 3: Activity Timeline */}
         {tab === "activity" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", padding: 10, borderRadius: 10 }}>
-              <span className="activity-icon-badge purple">🚀</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>Project handoff completed</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>by Sarah Johnson • 1h ago</div>
+            {d.handedOffAt && (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f5f3ff", border: "1px solid #ddd6fe", padding: 10, borderRadius: 10 }}>
+                <span className="activity-icon-badge purple">🚀</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#6b21a8" }}>Project handoff initiated</div>
+                  <div style={{ fontSize: 11, color: "#7c3aed" }}>Transferred to delivery • {formatDate(d.handedOffAt)}</div>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", padding: 10, borderRadius: 10 }}>
-              <span className="activity-icon-badge green">✓</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>Follow-up marked complete</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>by Mike Chen • 2h ago</div>
-              </div>
-            </div>
+            {d.stageHistory && d.stageHistory.length > 0 ? (
+              d.stageHistory.map((sh) => (
+                <div key={sh.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", padding: 10, borderRadius: 10 }}>
+                  <span className="activity-icon-badge orange">🔄</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>
+                      Stage changed: {sh.fromStage ? `${sh.fromStage.name} → ` : ""}{sh.toStage?.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                      by {sh.movedBy ? `${sh.movedBy.firstName} ${sh.movedBy.lastName}` : "System"} • {formatDate(sh.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", padding: 10, borderRadius: 10 }}>
+                  <span className="activity-icon-badge orange">🔄</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>Current stage: {d.stage?.name || "Proposal"}</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>by {d.owner ? `${d.owner.firstName} ${d.owner.lastName}` : "Admin"} • {formatDate(d.createdAt)}</div>
+                  </div>
+                </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", padding: 10, borderRadius: 10 }}>
-              <span className="activity-icon-badge orange">🔄</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>Stage changed: Proposal → Negotiation</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>by Emily Davis • 3h ago</div>
-              </div>
-            </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", padding: 10, borderRadius: 10 }}>
+                  <span className="activity-icon-badge green">✓</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>Deal opportunity initialized</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>Target Close: {formatDate(d.expectedCloseDate)}</div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 

@@ -12,7 +12,7 @@ Agency OS is built on a clean client-server architecture decoupled via RESTful A
 ```mermaid
 flowchart LR
     A["Frontend (Next.js 16 + React 19)"] -->|"REST API / Bearer JWT"| B["Backend (NestJS + TypeScript)"]
-    B -->|"Prisma ORM"| C["Database (PostgreSQL 16)"]
+    B -->|"Prisma ORM"| C["Database (PostgreSQL 15)"]
 ```
 
 ### 1.1 Core Responsibilities
@@ -33,7 +33,7 @@ flowchart LR
 ## 2. Key Data Models & Relations
 
 The Prisma schema (`backend/prisma/schema.prisma`) implements the following core domain entities:
-- **`User`**: System actors with defined `Role` (`ADMIN`, `SALES_REP`, `MANAGER`, `OPERATIONS`).
+- **`User`**: System actors with defined `Role` (`ADMIN` - Super Admin, `SALES` - Sales User).
 - **`Client`**: Companies and primary contacts involved in opportunities.
 - **`Pipeline` & `PipelineStage`**: Customizable deal lifecycles with stage sequence orders, win flags (`isWon`), and lost flags (`isLost`).
 - **`Deal`**: The central entity tracking deal value, currency, close dates, state (`ACTIVE`, `WON`, `LOST`), and relationships.
@@ -73,5 +73,5 @@ To continue development:
 1. Ensure Docker Desktop is running and run `docker-compose up -d`.
 2. In `backend/`: ensure `.env` matches `.env.example`, run `npx prisma migrate dev`, then `npm run start:dev`.
 3. In `frontend/`: ensure `.env.local` exists, then run `npm run dev`.
-4. Sign in at `http://localhost:3000` with seeded credentials (`admin@agency-os.local` / `Password123!`).
+4. Sign in at `http://localhost:3000` with seeded credentials (`admin@agency-os.local` / `Admin@1234`).
 

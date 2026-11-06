@@ -1,7 +1,7 @@
 # Agency OS — Sales Pipeline & Deal Management
 
 > **Production-grade CRM and Sales Pipeline Management System engineered specifically for digital agencies.**  
-> Built with Next.js 16, React 19, NestJS 10, Prisma ORM, and PostgreSQL.
+> Built with Next.js 16, React 19, NestJS 9, Prisma ORM, and PostgreSQL 15.
 
 ---
 
@@ -14,15 +14,15 @@ Agency OS provides digital agency teams with end-to-end deal tracking, sales pip
 - **Deal Intelligence & Health Scoring:** Automatic win probability calculation and stalled-deal detection based on stage age SLAs and activity frequency.
 - **Activity & Follow-Up Auditing:** Complete history log of stage movements, client communications, and scheduled follow-up tasks.
 - **Project Handoff Workflow:** Smooth operational transition when opportunities reach `CLOSED_WON`.
-- **Role-Based Access Control (RBAC):** Granular permissions supporting `ADMIN`, `MANAGER`, `SALES_REP`, and `OPERATIONS`.
+- **Role-Based Access Control (RBAC):** Two distinct roles: `ADMIN` (Super Admin — full system control, user management, pipeline configuration) and `SALES` (Sales User — manage deals, stage movements, and follow-ups).
 
 ---
 
 ## 2. Technology Stack
 
-- **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v4, `@dnd-kit`, TypeScript 5, Lucide Icons.
-- **Backend:** NestJS 10, TypeScript, Passport.js JWT Authentication, Class Validator, RxJS.
-- **Database & ORM:** PostgreSQL 16, Prisma ORM 5.
+- **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v4, `@dnd-kit`, TypeScript 5.
+- **Backend:** NestJS 9, TypeScript, Passport.js JWT Authentication, Class Validator, RxJS.
+- **Database & ORM:** PostgreSQL 15, Prisma ORM 5.
 - **Quality Assurance & Testing:** Jest, Playwright E2E, ESLint, TypeScript Strict Mode.
 - **Infrastructure:** Docker & Docker Compose.
 
@@ -154,13 +154,14 @@ npm run dev
 
 ## 8. Default Credentials & Ports
 
-| Service | Host URL / Port | Credentials (Dev) |
-| :--- | :--- | :--- |
-| **Frontend UI** | `http://localhost:3000` | — |
-| **Backend API** | `http://localhost:5001/api` | Bearer JWT |
-| **Default Admin Account** | `http://localhost:3000` | `admin@agency-os.local` / `Password123!` |
-| **PostgreSQL Database** | `localhost:5432` | User: `agency_os_user` / DB: `agency_os_sales` |
-| **PgAdmin (Optional)** | `http://localhost:5050` | `admin@agency-os.local` / `changeme_in_env` |
+| Service | Host URL / Port | Role | Credentials (Dev) |
+| :--- | :--- | :--- | :--- |
+| **Frontend UI** | `http://localhost:3000` | Web UI | — |
+| **Backend API** | `http://localhost:5001/api` | REST API | Bearer JWT |
+| **Super Admin Account** | `http://localhost:3000` | `ADMIN` | `Admin` (or `admin@agency-os.local`) / `Admin@1234` |
+| **Sales User Account** | `http://localhost:3000` | `SALES` | `sales@agency-os.local` / `Admin@1234` |
+| **PostgreSQL Database** | `localhost:5432` | DB | User: `agency_os_user` / DB: `agency_os_sales` |
+| **PgAdmin (Optional)** | `http://localhost:5050` | pgAdmin | `admin@agency-os.local` / `changeme_in_env` |
 
 ---
 

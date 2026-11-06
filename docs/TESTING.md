@@ -76,7 +76,7 @@ When the local environment (PostgreSQL and backend) is started:
    - [x] Access `http://localhost:3000`.
    - [x] Test login form with invalid credentials (verify error toast).
    - [x] Test login form with password visibility toggle icon.
-   - [x] Sign in as `admin@agency-os.local` / `Password123!` (verify JWT stored and redirect to pipeline).
+   - [x] Sign in as `admin@agency-os.local` / `Admin@1234` (verify JWT stored and redirect to pipeline).
 2. **Dashboard KPIs:**
    - [x] Verify Active Deals count matches live pipeline.
    - [x] Verify Total Pipeline Value broken down by currency (USD/EUR).

@@ -6,7 +6,7 @@
 ┌─────────────────────────────────────────────────────────┐
 │                     Browser / Client                      │
 │              Next.js 16 (App Router, React 19)            │
-│         TypeScript · Tailwind CSS · dnd-kit · Zod        │
+│         TypeScript · Tailwind CSS · dnd-kit               │
 └───────────────────────────┬─────────────────────────────┘
                             │ HTTPS / REST API
                             ▼
@@ -41,8 +41,7 @@
 - **TypeScript 5** for full type safety
 - **Tailwind CSS 4** with custom design tokens
 - **dnd-kit** for drag-and-drop Kanban
-- **React Hook Form** + **Zod** for form validation
-- **Lucide React** for consistent iconography
+- **Responsive UI** with native SVG iconography and typed state management
 
 ### Directory Structure
 
@@ -74,7 +73,6 @@ frontend/
 ├── lib/
 │   ├── api/                    # Typed API client functions
 │   ├── types/                  # Shared TypeScript interfaces
-│   ├── validations/            # Zod schemas
 │   ├── utils/                  # Utility functions
 │   └── constants/              # App constants
 ├── hooks/                      # Custom React hooks

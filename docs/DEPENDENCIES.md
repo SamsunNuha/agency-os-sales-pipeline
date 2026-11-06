@@ -14,7 +14,6 @@ This document records key dependencies utilized in the Agency OS Sales Pipeline 
 | **`@dnd-kit/core`** | `^6.3.1` | UI Interaction | Drag-and-drop primitives powering the interactive Kanban board stage movement. |
 | **`@dnd-kit/sortable`** | `^10.0.0` | UI Interaction | Sortable list mechanics for deal cards within columns. |
 | **`@dnd-kit/utilities`** | `^3.2.2` | Helper Library | CSS transform string generators for smooth card dragging transitions. |
-| **`lucide-react`** | `^1.16.0` | UI Icons | Modern SVG icons used for search, stage statuses, indicators, and navigation. |
 | **`tailwindcss`** | `^4.0.0` | Styling | Utility-first CSS framework integrated via `@tailwindcss/turbopack`. |
 | **`typescript`** | `^5.0.0` | Developer Tool | Strict static type checking across all client components. |
 | **`eslint`** | `^9.0.0` | Linter | Code quality enforcement with custom TypeScript and React Hooks configurations. |
@@ -25,8 +24,8 @@ This document records key dependencies utilized in the Agency OS Sales Pipeline 
 
 | Package Name | Version | Role / Scope | Purpose & Usage |
 | :--- | :--- | :--- | :--- |
-| **`@nestjs/core`** | `^10.0.0` | Core Framework | Enterprise-grade TypeScript server framework with dependency injection and modular architecture. |
-| **`@nestjs/common`** | `^10.0.0` | Core Framework | Decorators, HTTP abstractions, and lifecycle hooks. |
+| **`@nestjs/core`** | `^9.0.0` | Core Framework | Enterprise-grade TypeScript server framework with dependency injection and modular architecture. |
+| **`@nestjs/common`** | `^9.0.0` | Core Framework | Decorators, HTTP abstractions, and lifecycle hooks. |
 | **`@nestjs/jwt`** | `^10.2.0` | Authentication | JSON Web Token signing and verification for session management. |
 | **`@nestjs/passport`** | `^10.0.3` | Authentication | Passport integration layer for NestJS. |
 | **`passport-jwt`** | `^4.0.1` | Authentication | Strategy extracting and validating Bearer tokens in incoming HTTP requests. |
@@ -43,6 +42,6 @@ This document records key dependencies utilized in the Agency OS Sales Pipeline 
 
 | Tool / Technology | Version / Spec | Purpose & Usage |
 | :--- | :--- | :--- |
-| **PostgreSQL** | `16-alpine` | Primary ACID-compliant relational database. |
+| **PostgreSQL** | `15-alpine` | Primary ACID-compliant relational database. |
 | **Docker Compose** | `v3.8` | Container orchestration defining Postgres and PgAdmin services for local development. |
 

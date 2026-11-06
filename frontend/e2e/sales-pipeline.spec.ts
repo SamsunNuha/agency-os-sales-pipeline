@@ -5,7 +5,7 @@ import { test, expect, type Page } from "@playwright/test";
  * Default seed: admin@agency-os.local / Admin@1234
  */
 const ADMIN_EMAIL = "admin@agency-os.local";
-const ADMIN_PASSWORD = "changeme_in_env";
+const ADMIN_PASSWORD = "Admin@1234";
 
 /* ─── Helper: login and persist token via localStorage ──── */
 async function login(page: Page) {

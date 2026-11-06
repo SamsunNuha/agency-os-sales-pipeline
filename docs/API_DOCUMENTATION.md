@@ -23,7 +23,7 @@
   ```json
   {
     "email": "admin@agency-os.local",
-    "password": "Password123!"
+    "password": "Admin@1234"
   }
   ```
 - **Response (200 OK):**
