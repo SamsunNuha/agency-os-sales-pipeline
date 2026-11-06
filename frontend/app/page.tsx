@@ -2890,40 +2890,10 @@ function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "radial-gradient(circle at 10% 20%, #eff6ff 0%, #dbeafe 40%, #bfdbfe 90%)",
-        padding: "24px",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "1060px",
-          background: "#ffffff",
-          borderRadius: "28px",
-          boxShadow: "0 25px 60px -15px rgba(2, 132, 199, 0.22)",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "row",
-        }}
-      >
+    <div className="login-page-wrapper">
+      <div className="login-card-box">
         {/* Left Side: Brand, Hero & Value Proposition */}
-        <div
-          style={{
-            flex: "1 1 54%",
-            background: "linear-gradient(145deg, #f0f7ff 0%, #e0f0fe 50%, #bae6fd 100%)",
-            padding: "48px 48px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
+        <div className="login-left-banner">
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -2948,11 +2918,11 @@ function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
           </div>
 
           <div style={{ margin: "36px 0" }}>
-            <h1 style={{ fontSize: "42px", fontWeight: 900, color: "#0f172a", lineHeight: 1.15, marginBottom: 14 }}>
+            <h1 style={{ fontSize: "40px", fontWeight: 900, color: "#0f172a", lineHeight: 1.15, marginBottom: 14 }}>
               Smarter Sales.<br />
               <span style={{ color: "#2563eb" }}>Bigger Growth.</span>
             </h1>
-            <p style={{ fontSize: 16, color: "#475569", lineHeight: 1.5, maxWidth: "420px", marginBottom: 32 }}>
+            <p style={{ fontSize: 15, color: "#475569", lineHeight: 1.5, maxWidth: "420px", marginBottom: 32 }}>
               Manage your leads, track deals and close more sales with Agency OS.
             </p>
 
@@ -2978,16 +2948,7 @@ function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
         </div>
 
         {/* Right Side: Clean Sign In Form */}
-        <div
-          style={{
-            flex: "1 1 46%",
-            padding: "54px 44px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            background: "#ffffff",
-          }}
-        >
+        <div className="login-right-form">
           <div style={{ textAlign: "center", marginBottom: 26 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

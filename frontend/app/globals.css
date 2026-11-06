@@ -1291,3 +1291,68 @@ body {
   }
 }
 
+/* ─── Login Screen Responsive System ─────────────────────────────── */
+.login-page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 10% 20%, #eff6ff 0%, #dbeafe 40%, #bfdbfe 90%);
+  padding: 24px 16px;
+}
+
+.login-card-box {
+  width: 100%;
+  max-width: 1060px;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 25px 60px -15px rgba(2, 132, 199, 0.22);
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+}
+
+.login-left-banner {
+  flex: 1 1 54%;
+  background: linear-gradient(145deg, #f0f7ff 0%, #e0f0fe 50%, #bae6fd 100%);
+  padding: 48px 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.login-right-form {
+  flex: 1 1 46%;
+  padding: 50px 42px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
+  width: 100%;
+}
+
+@media (max-width: 880px) {
+  .login-page-wrapper {
+    padding: 16px 12px !important;
+    align-items: center !important;
+  }
+
+  .login-card-box {
+    flex-direction: column !important;
+    max-width: 440px !important;
+    border-radius: 22px !important;
+    box-shadow: 0 15px 35px -10px rgba(2, 132, 199, 0.25) !important;
+    margin: auto !important;
+  }
+
+  .login-left-banner {
+    display: none !important; /* On mobile / iPhone, hide the wide hero banner so the user gets a focused, beautiful login experience */
+  }
+
+  .login-right-form {
+    padding: 34px 22px !important;
+  }
+}
+
+
