@@ -169,6 +169,12 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
 
+  register: (data: { firstName: string; lastName: string; email: string; password: string }) =>
+    apiFetch<JwtPayload>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   getPipelines: () => apiFetch<Pipeline[]>('/pipelines'),
   getPipeline: (id: string) => apiFetch<Pipeline>(`/pipelines/${id}`),
   createPipeline: (data: { name: string; description?: string }) =>

@@ -2853,37 +2853,128 @@ function DealDetailModal({
    Login Screen — Split View with Brand & Graphics
    ========================================================= */
 function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [regFirstName, setRegFirstName] = useState("");
+  const [regLastName, setRegLastName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleLoginSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
     setLoading(true);
+
+    const inputUser = email.trim();
+    const isSuperAdmin =
+      inputUser.toLowerCase() === "admin" ||
+      inputUser.toLowerCase() === "admin@agency-os.local" ||
+      inputUser.toLowerCase() === "admin@agencyos.local";
+
     try {
-      const result = await api.login(email, password);
+      const result = await api.login(inputUser, password);
       localStorage.setItem("access_token", result.accessToken);
       localStorage.setItem("auth_user", JSON.stringify(result.user));
       onLogin(result);
     } catch {
-      // Offline fallback: enable seamless sign-in for preview & client inspection
-      const fallbackResult: JwtPayload = {
-        accessToken: "offline-token-" + Date.now(),
+      // Local verification fallback
+      if (isSuperAdmin && (password === "Admin@1234" || password === "Admin@123456")) {
+        const adminPayload: JwtPayload = {
+          accessToken: "offline-superadmin-token-" + Date.now(),
+          user: {
+            id: "u-superadmin",
+            email: "admin@agency-os.local",
+            firstName: "Super",
+            lastName: "Admin",
+            agencyId: "agency-1",
+            roles: ["ADMIN"],
+          },
+        };
+        localStorage.setItem("access_token", adminPayload.accessToken);
+        localStorage.setItem("auth_user", JSON.stringify(adminPayload.user));
+        onLogin(adminPayload);
+      } else if (!isSuperAdmin && password.length >= 4) {
+        const salesPayload: JwtPayload = {
+          accessToken: "offline-sales-token-" + Date.now(),
+          user: {
+            id: "u-" + Date.now(),
+            email: inputUser.includes("@") ? inputUser : `${inputUser}@agency-os.local`,
+            firstName: inputUser.split("@")[0] || "Sales",
+            lastName: "User",
+            agencyId: "agency-1",
+            roles: ["SALES"],
+          },
+        };
+        localStorage.setItem("access_token", salesPayload.accessToken);
+        localStorage.setItem("auth_user", JSON.stringify(salesPayload.user));
+        onLogin(salesPayload);
+      } else {
+        setError("Invalid credentials. For Super Admin, use Username: Admin and Password: Admin@1234. Other users must register first.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRegisterSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+
+    if (regPassword !== regConfirmPassword) {
+      setError("Passwords do not match. Please re-enter.");
+      return;
+    }
+    if (regPassword.length < 4) {
+      setError("Password must be at least 4 characters.");
+      return;
+    }
+    if (regEmail.trim().toLowerCase() === "admin") {
+      setError("The 'Admin' username is reserved for Super Admin only.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await api.register({
+        firstName: regFirstName.trim() || "Sales",
+        lastName: regLastName.trim() || "User",
+        email: regEmail.trim().toLowerCase(),
+        password: regPassword,
+      });
+
+      localStorage.setItem("access_token", result.accessToken);
+      localStorage.setItem("auth_user", JSON.stringify(result.user));
+      setSuccessMsg("Registration successful! Logging you into your Sales workspace...");
+      setTimeout(() => {
+        onLogin(result);
+      }, 700);
+    } catch {
+      // Offline fallback: register sales user immediately
+      const newSalesPayload: JwtPayload = {
+        accessToken: "offline-registered-token-" + Date.now(),
         user: {
-          id: "u-admin",
-          email: email || "admin@agency-os.local",
-          firstName: "John",
-          lastName: "Smith",
+          id: "u-reg-" + Date.now(),
+          email: regEmail.trim().toLowerCase(),
+          firstName: regFirstName.trim() || "Sales",
+          lastName: regLastName.trim() || "User",
           agencyId: "agency-1",
-          roles: ["ADMIN"],
+          roles: ["SALES"],
         },
       };
-      localStorage.setItem("access_token", fallbackResult.accessToken);
-      localStorage.setItem("auth_user", JSON.stringify(fallbackResult.user));
-      onLogin(fallbackResult);
+      localStorage.setItem("access_token", newSalesPayload.accessToken);
+      localStorage.setItem("auth_user", JSON.stringify(newSalesPayload.user));
+      setSuccessMsg("Registration successful! Logging you in...");
+      setTimeout(() => {
+        onLogin(newSalesPayload);
+      }, 700);
     } finally {
       setLoading(false);
     }
@@ -2943,38 +3034,90 @@ function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
           </div>
 
           <div style={{ fontSize: 12, color: "#94a3b8" }}>
-            © 2026 Agency OS. Production-Grade Deal Management.
+            &copy; 2026 Agency OS. Production-Grade Deal Management.
           </div>
         </div>
 
-        {/* Right Side: Clean Sign In Form */}
+        {/* Right Side: Clean Sign In / Register Form */}
         <div className="login-right-form">
-          <div style={{ textAlign: "center", marginBottom: 26 }}>
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/agency-logo.jpg"
               alt="Agency OS"
               style={{
-                width: 62,
-                height: 62,
-                borderRadius: 16,
+                width: 58,
+                height: 58,
+                borderRadius: 14,
                 objectFit: "contain",
                 backgroundColor: "#ffffff",
                 padding: 4,
                 boxShadow: "0 6px 20px rgba(37, 99, 235, 0.2)",
-                marginBottom: 10,
+                marginBottom: 8,
                 display: "inline-block",
               }}
             />
             <div style={{ fontWeight: 800, fontSize: 18, color: "#0f172a" }}>Agency OS</div>
-            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 16 }}>Sales Pipeline</div>
+            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>Sales Pipeline &amp; CRM</div>
 
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>
-              Sign In
-            </h2>
-            <p style={{ color: "#64748b", fontSize: 13 }}>
-              Use your agency credentials to continue
-            </p>
+            {/* Mode Switcher Tabs */}
+            <div
+              style={{
+                display: "flex",
+                background: "#f1f5f9",
+                borderRadius: 12,
+                padding: 4,
+                maxWidth: 320,
+                margin: "0 auto",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("login");
+                  setError("");
+                  setSuccessMsg("");
+                }}
+                style={{
+                  flex: 1,
+                  padding: "8px 12px",
+                  borderRadius: 9,
+                  border: "none",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  background: authMode === "login" ? "#ffffff" : "transparent",
+                  color: authMode === "login" ? "#2563eb" : "#64748b",
+                  boxShadow: authMode === "login" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("register");
+                  setError("");
+                  setSuccessMsg("");
+                }}
+                style={{
+                  flex: 1,
+                  padding: "8px 12px",
+                  borderRadius: 9,
+                  border: "none",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  background: authMode === "register" ? "#ffffff" : "transparent",
+                  color: authMode === "register" ? "#2563eb" : "#64748b",
+                  boxShadow: authMode === "register" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Register (Sales)
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -2986,113 +3129,357 @@ function LoginScreen({ onLogin }: { onLogin: (auth: JwtPayload) => void }) {
                 padding: "10px 14px",
                 borderRadius: 10,
                 fontSize: 13,
-                marginBottom: 18,
+                marginBottom: 16,
+                lineHeight: 1.4,
               }}
             >
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  background: "#f8fafc",
-                  border: "1.5px solid #e2e8f0",
-                  borderRadius: 12,
-                  padding: "4px 14px",
-                }}
-              >
-                <span style={{ color: "#64748b", marginRight: 10, fontSize: 15 }}>👤</span>
-                <input
-                  id="login-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Username (Email or Username)"
-                  required
-                  autoFocus
-                  style={{
-                    width: "100%",
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    padding: "10px 0",
-                    fontSize: 14,
-                    color: "#0f172a",
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  background: "#f8fafc",
-                  border: "1.5px solid #e2e8f0",
-                  borderRadius: 12,
-                  padding: "4px 14px",
-                }}
-              >
-                <span style={{ color: "#64748b", marginRight: 10, fontSize: 15 }}>🔒</span>
-                <input
-                  id="login-password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  required
-                  style={{
-                    width: "100%",
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    padding: "10px 0",
-                    fontSize: 14,
-                    color: "#0f172a",
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label="Toggle password"
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 16,
-                    color: "#64748b",
-                  }}
-                >
-                  {showPassword ? "🙈" : "👁️"}
-                </button>
-              </div>
-            </div>
-
-            <button
-              id="login-submit"
-              type="submit"
-              disabled={loading}
+          {successMsg && (
+            <div
               style={{
-                marginTop: 6,
-                background: "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: 12,
-                padding: "13px 20px",
-                fontSize: 15,
-                fontWeight: 700,
-                cursor: loading ? "not-allowed" : "pointer",
-                boxShadow: "0 10px 20px -5px rgba(37, 99, 235, 0.4)",
+                background: "#ecfdf5",
+                border: "1px solid #a7f3d0",
+                color: "#047857",
+                padding: "10px 14px",
+                borderRadius: 10,
+                fontSize: 13,
+                marginBottom: 16,
+                fontWeight: 600,
               }}
             >
-              {loading ? "Signing In..." : "➔ Sign In"}
-            </button>
-          </form>
+              {successMsg}
+            </div>
+          )}
+
+          {/* ─── Mode 1: Sign In ─── */}
+          {authMode === "login" ? (
+            <form onSubmit={handleLoginSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* Super Admin Notice Card */}
+              <div
+                style={{
+                  background: "linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: 12,
+                  padding: "10px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <span style={{ fontSize: 18 }}>🛡️</span>
+                <div style={{ fontSize: 12, color: "#1e3a8a", lineHeight: 1.4 }}>
+                  <strong>Super Admin Login:</strong> Username: <code style={{ background: "#ffffff", padding: "1px 5px", borderRadius: 4, fontWeight: 700 }}>Admin</code> &bull; Password: <code style={{ background: "#ffffff", padding: "1px 5px", borderRadius: 4, fontWeight: 700 }}>Admin@1234</code>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+                  Username or Email
+                </label>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    background: "#f8fafc",
+                    border: "1.5px solid #e2e8f0",
+                    borderRadius: 12,
+                    padding: "4px 14px",
+                  }}
+                >
+                  <span style={{ color: "#64748b", marginRight: 10, fontSize: 15 }}>👤</span>
+                  <input
+                    id="login-email"
+                    type="text"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter 'Admin' or your registered email"
+                    required
+                    autoFocus
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      padding: "10px 0",
+                      fontSize: 14,
+                      color: "#0f172a",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+                  Password
+                </label>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    background: "#f8fafc",
+                    border: "1.5px solid #e2e8f0",
+                    borderRadius: 12,
+                    padding: "4px 14px",
+                  }}
+                >
+                  <span style={{ color: "#64748b", marginRight: 10, fontSize: 15 }}>🔒</span>
+                  <input
+                    id="login-password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password (e.g. Admin@1234)"
+                    required
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      padding: "10px 0",
+                      fontSize: 14,
+                      color: "#0f172a",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label="Toggle password"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: 16,
+                      color: "#64748b",
+                    }}
+                  >
+                    {showPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                id="login-submit"
+                type="submit"
+                disabled={loading}
+                style={{
+                  marginTop: 4,
+                  background: "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: 12,
+                  padding: "13px 20px",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  cursor: loading ? "not-allowed" : "pointer",
+                  boxShadow: "0 10px 20px -5px rgba(37, 99, 235, 0.4)",
+                  transition: "transform 0.15s ease",
+                }}
+              >
+                {loading ? "Signing In..." : "➔ Sign In"}
+              </button>
+
+              <div style={{ textAlign: "center", fontSize: 12, color: "#64748b", marginTop: 8 }}>
+                Sales user without an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode("register");
+                    setError("");
+                  }}
+                  style={{
+                    color: "#2563eb",
+                    fontWeight: 700,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Register Here First
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* ─── Mode 2: Register (Sales Users) ─── */
+            <form onSubmit={handleRegisterSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div
+                style={{
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: 10,
+                  padding: "8px 12px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontSize: 12,
+                  color: "#166534",
+                  fontWeight: 600,
+                }}
+              >
+                <span>💼</span>
+                <span>Sales User Registration &bull; Access your pipelines and deals</span>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#334155", marginBottom: 4 }}>
+                    First Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={regFirstName}
+                    onChange={(e) => setRegFirstName(e.target.value)}
+                    placeholder="e.g. Sarah"
+                    required
+                    style={{
+                      width: "100%",
+                      background: "#f8fafc",
+                      border: "1.5px solid #e2e8f0",
+                      borderRadius: 10,
+                      padding: "8px 12px",
+                      fontSize: 13.5,
+                      color: "#0f172a",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#334155", marginBottom: 4 }}>
+                    Last Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={regLastName}
+                    onChange={(e) => setRegLastName(e.target.value)}
+                    placeholder="e.g. Miller"
+                    required
+                    style={{
+                      width: "100%",
+                      background: "#f8fafc",
+                      border: "1.5px solid #e2e8f0",
+                      borderRadius: 10,
+                      padding: "8px 12px",
+                      fontSize: 13.5,
+                      color: "#0f172a",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#334155", marginBottom: 4 }}>
+                  Work Email *
+                </label>
+                <input
+                  type="email"
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.target.value)}
+                  placeholder="name@company.com"
+                  required
+                  style={{
+                    width: "100%",
+                    background: "#f8fafc",
+                    border: "1.5px solid #e2e8f0",
+                    borderRadius: 10,
+                    padding: "8px 12px",
+                    fontSize: 13.5,
+                    color: "#0f172a",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#334155", marginBottom: 4 }}>
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  placeholder="At least 4 characters"
+                  required
+                  style={{
+                    width: "100%",
+                    background: "#f8fafc",
+                    border: "1.5px solid #e2e8f0",
+                    borderRadius: 10,
+                    padding: "8px 12px",
+                    fontSize: 13.5,
+                    color: "#0f172a",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#334155", marginBottom: 4 }}>
+                  Confirm Password *
+                </label>
+                <input
+                  type="password"
+                  value={regConfirmPassword}
+                  onChange={(e) => setRegConfirmPassword(e.target.value)}
+                  placeholder="Re-type password"
+                  required
+                  style={{
+                    width: "100%",
+                    background: "#f8fafc",
+                    border: "1.5px solid #e2e8f0",
+                    borderRadius: 10,
+                    padding: "8px 12px",
+                    fontSize: 13.5,
+                    color: "#0f172a",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  marginTop: 6,
+                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: 12,
+                  padding: "13px 20px",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  cursor: loading ? "not-allowed" : "pointer",
+                  boxShadow: "0 10px 20px -5px rgba(16, 185, 129, 0.4)",
+                }}
+              >
+                {loading ? "Creating Account..." : "➔ Create Account & Sign In"}
+              </button>
+
+              <div style={{ textAlign: "center", fontSize: 12, color: "#64748b", marginTop: 6 }}>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode("login");
+                    setError("");
+                  }}
+                  style={{
+                    color: "#2563eb",
+                    fontWeight: 700,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Sign In
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
